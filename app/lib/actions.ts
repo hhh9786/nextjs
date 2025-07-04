@@ -39,4 +39,34 @@ const createInvoice = async (formData: FormData) => {
     revalidatePath('/dashboard/invoices'); // Revalidate the invoices page to reflect the new invoice
     redirect('/dashboard/invoices'); // Redirect to the invoices page after creation
 }
-export { createInvoice };
+
+const updateInvoice = async (id: string, formData: FormData) => {
+    const invoiceData = Invoice.parse({
+        customerId: formData.get('customerId') as string,
+        amount: formData.get('amount') as string,
+        status: formData.get('status') as string,
+    });
+    invoiceData.amount *= 100; // Convert to cents
+    const date = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+    console.log(invoiceData);
+    await sql`
+        UPDATE invoices
+        SET customer_id = ${invoiceData.customerId},
+            amount = ${invoiceData.amount},
+            status = ${invoiceData.status},
+            date = ${date}
+        WHERE id = ${id}
+    `;
+    revalidatePath('/dashboard/invoices'); // Revalidate the invoices page to reflect the updated invoice
+    redirect('/dashboard/invoices'); // Redirect to the invoices page after update
+}
+
+const deleteInvoice = async (id: string) => {
+    await sql`
+        DELETE FROM invoices
+        WHERE id = ${id}
+    `;
+    revalidatePath('/dashboard/invoices'); // Revalidate the invoices page to reflect the deleted
+}
+
+export { createInvoice, updateInvoice, deleteInvoice };
